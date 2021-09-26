@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
-        "allowJs": false,
+        "allowJs": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "target": "es6",
         "sourceMap": true,
-        "outDir": "./.tmp/build/",
+        "outDir": "./dist",
         "moduleResolution": "node",
         "declaration": true,
         "lib": [

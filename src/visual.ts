@@ -12,6 +12,7 @@ import DataView = powerbi.DataView;
 import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnumerationObject;
 
 import { VisualSettings } from "./settings";
+import { geoClipRectangle } from "d3-geo";
 
 export interface ship {
   x: number;
@@ -47,8 +48,6 @@ export class Visual implements IVisual {
     let width = target.clientWidth;
     let height = target.clientHeight;
 
-    console.log(width, height);
-
     for (let n = 0; n < this.numberOfShips; n++) {
       let xSpeed = 0;
       let ySpeed = 0;
@@ -72,20 +71,19 @@ export class Visual implements IVisual {
         angle: this.generateRandomNumber(0, 359),
         zIndex: Math.round(sizeMultiplier * 100),
       });
-
-      this.drawShips(target);
     }
+    this.drawShips(target);
   }
 
   private drawShips(target: HTMLElement) {
-    //
+    console.log(this.numberOfShips);
     for (let n = 0; n < this.numberOfShips; n++) {
       let img: HTMLImageElement = <HTMLImageElement>(
         document.getElementById("ship" + n.toString())
       );
+
       if (!img) {
-        // let testp = document.createElement("p");
-        // testp.innerHTML = "pooopy";
+        console.log(img);
         img = document.createElement("img");
         img.src = this.imageUrl;
         img.style.width = this.ships[n].width + "px";
@@ -106,9 +104,61 @@ export class Visual implements IVisual {
         img.style.transform =
           "rotate(" + Math.round(this.ships[n].angle).toString() + ")";
 
-        //img.style.webkitTransition = "transform 0.5s";
+        img.style.webkitTransition = "transform 0.5s";
       }
     }
+  }
+
+  private moveShips(target: HTMLElement) {
+    for (let n = 0; n < this.numberOfShips; n++) {
+      let maxX: number = target.clientWidth - this.ships[n].width;
+      let maxY: number = target.clientHeight - this.ships[n].height;
+
+      let previousX = this.ships[n].x;
+      let previousY = this.ships[n].y;
+
+      this.ships[n].x += this.ships[n].xSpeed;
+      this.ships[n].y += this.ships[n].ySpeed;
+
+      if (this.ships[n].x > maxX) {
+        this.ships[n].xSpeed = this.ships[n].xSpeed * -1;
+        this.ships[n].x = maxX;
+      }
+
+      if (this.ships[n].x < 0) {
+        this.ships[n].xSpeed = this.ships[n].xSpeed * -1;
+        this.ships[n].x = 0;
+      }
+
+      if (this.ships[n].y > maxY) {
+        this.ships[n].ySpeed = this.ships[n].ySpeed * -1;
+        this.ships[n].y = maxY;
+      }
+
+      if (this.ships[n].y < 0) {
+        this.ships[n].ySpeed = this.ships[n].ySpeed * -1;
+        this.ships[n].y = 0;
+      }
+
+      let heading =
+        (Math.atan2(this.ships[n].y - previousY, this.ships[n].x - previousX) /
+          Math.PI) *
+          180 +
+        90;
+      this.ships[n].angle = heading;
+    }
+
+    this.drawShips(target);
+  }
+
+  private initTimer(target: HTMLElement) {
+    if (this.timer !== null) {
+      clearInterval(this.timer);
+    }
+    let visual = this;
+    this.timer = setInterval(() => {
+      visual.moveShips(target);
+    }, 50);
   }
 
   constructor(options: VisualConstructorOptions) {
@@ -116,6 +166,7 @@ export class Visual implements IVisual {
     this.target = options.element;
     if (document) {
       this.initialiseShips(this.target);
+      this.initTimer(this.target);
     }
   }
 
