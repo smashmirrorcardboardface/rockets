@@ -31,7 +31,7 @@ export class Visual implements IVisual {
 
   // private imageUrl = "assets/rocket-312767.svg";
   private imageUrl =
-    "https://upload.wikimedia.org/wikipedia/commons/f/f7/Bananas.svg";
+    "https://ik.imagekit.io/smashmirror/test_svgs/black-and-white-rocket_ExHuLAnyF.svg?updatedAt=1632679869866";
   private width: number = 50;
   private height: number = 88;
   private numberOfShips: number = 15;
@@ -76,14 +76,12 @@ export class Visual implements IVisual {
   }
 
   private drawShips(target: HTMLElement) {
-    console.log(this.numberOfShips);
     for (let n = 0; n < this.numberOfShips; n++) {
       let img: HTMLImageElement = <HTMLImageElement>(
         document.getElementById("ship" + n.toString())
       );
 
       if (!img) {
-        console.log(img);
         img = document.createElement("img");
         img.src = this.imageUrl;
         img.style.width = this.ships[n].width + "px";
@@ -96,15 +94,14 @@ export class Visual implements IVisual {
       }
       img.style.left = this.ships[n].x + "px";
       img.style.top = this.ships[n].y + "px";
-      console.log(img);
       if (
         img.style.transform !==
-        "rotate(" + Math.round(this.ships[n].angle).toString() + ")"
+        "rotate(" + Math.round(this.ships[n].angle).toString() + "deg)"
       ) {
         img.style.transform =
-          "rotate(" + Math.round(this.ships[n].angle).toString() + ")";
+          "rotate(" + Math.round(this.ships[n].angle).toString() + "deg)";
 
-        img.style.webkitTransition = "transform 0.5s";
+        img.style.transition = "0.5s";
       }
     }
   }
@@ -170,11 +167,26 @@ export class Visual implements IVisual {
     }
   }
 
+  private removeUnusedShips(previous, current) {
+    if (current < previous) {
+      for (let n = 0; n < previous; n++) {
+        let ship = document.getElementById("ship" + n);
+        ship.parentElement.removeChild(ship);
+      }
+    }
+  }
+
   public update(options: VisualUpdateOptions) {
     this.settings = Visual.parseSettings(
       options && options.dataViews && options.dataViews[0]
     );
     console.log("Visual update", options);
+
+    let noOfShips = Number(options.dataViews[0].single.value);
+    this.removeUnusedShips(this.numberOfShips, noOfShips);
+    this.numberOfShips = noOfShips;
+
+    this.initialiseShips(this.target);
   }
 
   private static parseSettings(dataView: DataView): VisualSettings {
